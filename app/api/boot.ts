@@ -27,6 +27,16 @@ app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 export default app;
 
 if (env.isProduction) {
+  try {
+    const { migrate } = await import("drizzle-orm/libsql/migrator");
+    const { getDb } = await import("./queries/connection");
+    await migrate(getDb(), { migrationsFolder: "db/migrations" });
+    console.log("[boot] Database migrations applied successfully");
+  } catch (err) {
+    console.error("[boot] Failed to apply database migrations:", err);
+    process.exit(1);
+  }
+
   const { serve } = await import("@hono/node-server");
   const { serveStaticFiles } = await import("./lib/vite");
   serveStaticFiles(app);
