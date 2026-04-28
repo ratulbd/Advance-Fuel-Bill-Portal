@@ -39,7 +39,7 @@ export default function Login() {
               <CardTitle className="text-2xl font-bold text-white tracking-tight">
                 Telecom Advance Portal
               </CardTitle>
-              <p className="text-sm text-slate-400 mt-1 font-medium">Fuel &amp; Petty Cash Tracking</p>
+              <p className="text-sm text-slate-400 mt-1 font-medium">Cash Fuel Purchase Tracking</p>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -48,19 +48,19 @@ export default function Login() {
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
                   <span className="text-green-400 text-xs font-bold">1</span>
                 </div>
-                <p className="text-sm text-slate-300">Search by SL tracking number</p>
+                <p className="text-sm text-slate-300">Search by BTS tracking number</p>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
                   <span className="text-blue-400 text-xs font-bold">2</span>
                 </div>
-                <p className="text-sm text-slate-300">View real-time approval workflow</p>
+                <p className="text-sm text-slate-300">View current approval workflow status</p>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
                   <span className="text-orange-400 text-xs font-bold">3</span>
                 </div>
-                <p className="text-sm text-slate-300">Submit fuel &amp; purchase data</p>
+                <p className="text-sm text-slate-300">Submit fuel purchase additional information</p>
               </div>
             </div>
 

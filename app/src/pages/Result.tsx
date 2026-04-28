@@ -25,6 +25,9 @@ import {
   ZoomIn,
   FileImage,
   Fuel,
+  ChevronRight,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 
 interface TierStatus {
@@ -43,6 +46,7 @@ interface RecordData {
   purchaseType?: string;
   billPeriod: string;
   billSubmitAmount: string;
+  billSentDate: string | null;
   topSheetImage: string;
   fieldRemarks: string;
   tiers: TierStatus[];
@@ -96,24 +100,26 @@ export default function Result() {
   const record = activeRecord || initialRecord;
 
   const [formData, setFormData] = useState({
-    dieselAg: "",
-    octanePg: "",
-    petrolPg: "",
-    dieselVehicle: "",
+    dieselAg: "0",
+    octanePg: "0",
+    petrolPg: "0",
+    dieselVehicle: "0",
     purchaseSource: "",
     pumpName: "",
-    amountReturnViaBank: "",
+    amountReturnViaBank: "0",
     remarks: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
+  const [imgZoom, setImgZoom] = useState(1);
 
   // Reset image state when switching records
   useEffect(() => {
     setImgLoading(true);
     setImgError(false);
+    setImgZoom(1);
   }, [record?.topSheetImage]);
 
   const submitMutation = trpc.sheets.submit.useMutation({
@@ -270,7 +276,7 @@ export default function Result() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label className="text-xs text-slate-500 uppercase tracking-wider">SL Number</Label>
+                <Label className="text-xs text-slate-500 uppercase tracking-wider">BTS Tracker Number</Label>
                 <p className="font-semibold text-slate-800">{record.sl}</p>
               </div>
               <div className="space-y-1">
@@ -292,6 +298,10 @@ export default function Result() {
               <div className="space-y-1">
                 <Label className="text-xs text-slate-500 uppercase tracking-wider">Bill Period</Label>
                 <p className="font-semibold text-slate-800">{record.billPeriod || "—"}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-500 uppercase tracking-wider">Bill Sent Date</Label>
+                <p className="font-semibold text-slate-800">{formatSheetDate(record.billSentDate) || "—"}</p>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-slate-500 uppercase tracking-wider">Bill Submit Amount</Label>
@@ -345,12 +355,47 @@ export default function Result() {
                       </div>
                     </DialogTrigger>
                     {!imgError && (
-                      <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none">
-                        <img
-                          src={convertDriveUrl(record.topSheetImage)}
-                          alt="Bill Top Sheet Enlarged"
-                          className="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
-                        />
+                      <DialogContent className="max-w-5xl p-0 bg-slate-900/95 border-slate-700 backdrop-blur-sm">
+                        <div className="flex flex-col h-[90vh]">
+                          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                            <p className="text-sm text-slate-300 font-medium">Bill Top Sheet</p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-300 hover:text-white hover:bg-slate-700"
+                                onClick={() => setImgZoom((z) => Math.min(z + 0.25, 3))}
+                              >
+                                <ZoomIn className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-300 hover:text-white hover:bg-slate-700"
+                                onClick={() => setImgZoom((z) => Math.max(z - 0.25, 0.5))}
+                              >
+                                <ZoomOut className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-300 hover:text-white hover:bg-slate-700"
+                                onClick={() => setImgZoom(1)}
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+                            <img
+                              src={convertDriveUrl(record.topSheetImage)}
+                              alt="Bill Top Sheet Enlarged"
+                              className="rounded-lg shadow-2xl transition-transform duration-200"
+                              style={{ transform: `scale(${imgZoom})`, maxWidth: "100%", objectFit: "contain" }}
+                              draggable={false}
+                            />
+                          </div>
+                        </div>
                       </DialogContent>
                     )}
                   </Dialog>
@@ -414,18 +459,12 @@ export default function Result() {
                       {isPending && !tier.receiveDate && (
                         <p className="text-xs text-slate-400 mt-0.5">Pending</p>
                       )}
-                      <div
-                        className={`hidden md:block w-8 h-0.5 mx-auto mt-2 rounded-full transition-colors duration-500 ${
-                          isCompleted ? "bg-green-400" : "bg-slate-200"
-                        }`}
-                      />
+
                     </div>
                     {!isLast && (
-                      <div
-                        className={`hidden md:block w-8 h-0.5 self-center transition-colors duration-500 ${
-                          isCompleted ? "bg-green-400" : "bg-slate-200"
-                        }`}
-                      />
+                      <ChevronRight className={`hidden md:block w-5 h-5 self-center shrink-0 transition-colors duration-500 ${
+                        isCompleted ? "text-green-400" : "text-slate-300"
+                      }`} />
                     )}
                   </div>
                 );
@@ -437,7 +476,7 @@ export default function Result() {
         {/* Data Collection Form */}
         <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
           <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Fuel & Purchase Information</CardTitle>
+            <CardTitle className="text-xl">Submit Fuel Purchase Additional Information</CardTitle>
             <p className="text-sm text-slate-500">All fuel fields are mandatory. Enter 0 if not applicable.</p>
           </CardHeader>
           <CardContent>
@@ -484,6 +523,11 @@ export default function Result() {
                       placeholder="0"
                       value={formData.dieselAg}
                       onChange={(e) => setFormData({ ...formData, dieselAg: e.target.value })}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => {
+                        if (!e.target.value) setFormData((prev) => ({ ...prev, dieselAg: "0" }));
+                      }}
+                      onWheel={(e) => e.currentTarget.blur()}
                     />
                     {formErrors.dieselAg && (
                       <p className="text-xs text-red-500">{formErrors.dieselAg}</p>
@@ -502,6 +546,11 @@ export default function Result() {
                       placeholder="0"
                       value={formData.octanePg}
                       onChange={(e) => setFormData({ ...formData, octanePg: e.target.value })}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => {
+                        if (!e.target.value) setFormData((prev) => ({ ...prev, octanePg: "0" }));
+                      }}
+                      onWheel={(e) => e.currentTarget.blur()}
                     />
                     {formErrors.octanePg && (
                       <p className="text-xs text-red-500">{formErrors.octanePg}</p>
@@ -520,6 +569,11 @@ export default function Result() {
                       placeholder="0"
                       value={formData.petrolPg}
                       onChange={(e) => setFormData({ ...formData, petrolPg: e.target.value })}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => {
+                        if (!e.target.value) setFormData((prev) => ({ ...prev, petrolPg: "0" }));
+                      }}
+                      onWheel={(e) => e.currentTarget.blur()}
                     />
                     {formErrors.petrolPg && (
                       <p className="text-xs text-red-500">{formErrors.petrolPg}</p>
@@ -538,6 +592,11 @@ export default function Result() {
                       placeholder="0"
                       value={formData.dieselVehicle}
                       onChange={(e) => setFormData({ ...formData, dieselVehicle: e.target.value })}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => {
+                        if (!e.target.value) setFormData((prev) => ({ ...prev, dieselVehicle: "0" }));
+                      }}
+                      onWheel={(e) => e.currentTarget.blur()}
                     />
                     {formErrors.dieselVehicle && (
                       <p className="text-xs text-red-500">{formErrors.dieselVehicle}</p>
@@ -602,6 +661,11 @@ export default function Result() {
                     placeholder="0"
                     value={formData.amountReturnViaBank}
                     onChange={(e) => setFormData({ ...formData, amountReturnViaBank: e.target.value })}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onBlur={(e) => {
+                      if (!e.target.value) setFormData((prev) => ({ ...prev, amountReturnViaBank: "0" }));
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
                   />
                   {formErrors.amountReturnViaBank && (
                     <p className="text-xs text-red-500">{formErrors.amountReturnViaBank}</p>

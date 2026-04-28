@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Search, LogOut, AlertCircle, CheckCircle, Fuel, FileSearch, TrendingUp } from "lucide-react";
+import { Search, LogOut, AlertCircle, CheckCircle, Fuel, FileSearch, TrendingUp, MapPin, Building2 } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -18,6 +18,11 @@ export default function Dashboard() {
   const [searchError, setSearchError] = useState("");
 
   const { data: validation, isLoading: validationLoading } = trpc.sheets.validateEmail.useQuery(
+    undefined,
+    { enabled: !!user, retry: false }
+  );
+
+  const { data: userInfo } = trpc.sheets.getUserInfo.useQuery(
     undefined,
     { enabled: !!user, retry: false }
   );
@@ -86,7 +91,7 @@ export default function Dashboard() {
             </div>
             <div>
               <h1 className="font-bold text-slate-800 text-lg leading-tight">Telecom Advance Portal</h1>
-              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Fuel &amp; Petty Cash</p>
+              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Cash Fuel Purchase Tracking</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -103,7 +108,22 @@ export default function Dashboard() {
                   {user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-slate-600 hidden sm:inline font-medium">{user?.name}</span>
+              <div className="hidden sm:flex flex-col">
+                <span className="text-sm text-slate-700 font-medium leading-tight">{user?.name}</span>
+                {userInfo?.circle && (
+                  <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {userInfo.circle}
+                    {userInfo.subCenter && (
+                      <>
+                        <span className="mx-0.5">·</span>
+                        <Building2 className="w-3 h-3" />
+                        {userInfo.subCenter}
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
             <Button variant="ghost" size="sm" onClick={logout} className="text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
@@ -157,7 +177,7 @@ export default function Dashboard() {
                 <Input
                   type="text"
                   inputMode="numeric"
-                  placeholder="Enter tracking number (SL)..."
+                  placeholder="Enter BTS tracking number..."
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="pl-10 h-12 text-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all"

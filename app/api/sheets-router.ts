@@ -78,6 +78,7 @@ async function searchFuelBill(slValue: string) {
         billingType: row[env.fuelBillBillingTypeCol] || "",
         billPeriod: row[env.fuelBillBillPeriodCol] || "",
         billSubmitAmount: row[env.fuelBillBillSubmitAmountCol] || "",
+        billSentDate: convertSerialDate(row[env.fuelBillBillSentDateCol]) || null,
         topSheetImage: row[env.fuelBillTopSheetImageCol] || "",
         fieldRemarks: row[env.fuelBillFieldRemarksCol] || "",
         tiers,
@@ -129,6 +130,7 @@ async function searchPettyCash(slValue: string) {
         purchaseType: row[env.pettyCashPurchaseTypeCol] || "",
         billPeriod: row[env.pettyCashBillPeriodCol] || "",
         billSubmitAmount: row[env.pettyCashBillSubmitAmountCol] || "",
+        billSentDate: convertSerialDate(row[env.pettyCashBillSentDateCol]) || null,
         topSheetImage: row[env.pettyCashTopSheetImageCol] || "",
         fieldRemarks: row[env.pettyCashFieldRemarksCol] || "",
         tiers,
@@ -180,6 +182,29 @@ export const sheetsRouter = createRouter({
         return { found: false, data: null, otherMatch: null, message: "Search failed. Please try again later." };
       }
     }),
+
+  getUserInfo: authedQuery.query(async (opts) => {
+    const userEmail = opts.ctx.user?.email;
+    if (!userEmail) {
+      return { circle: null, subCenter: null };
+    }
+    try {
+      const rows = await getSheetData(env.googleIdSheetId, "ID!A:Z");
+      for (const row of rows) {
+        const email = (row[env.idSectionEmailCol] || "").toString().trim().toLowerCase();
+        if (email === userEmail.toLowerCase().trim()) {
+          return {
+            circle: (row[1] || "").toString().trim(),
+            subCenter: (row[2] || "").toString().trim(),
+          };
+        }
+      }
+      return { circle: null, subCenter: null };
+    } catch (error) {
+      console.error("[sheets] getUserInfo error:", error);
+      return { circle: null, subCenter: null };
+    }
+  }),
 
   submit: authedQuery
     .input(
