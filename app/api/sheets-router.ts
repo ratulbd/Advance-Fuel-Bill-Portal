@@ -61,11 +61,7 @@ async function searchFuelBill(slValue: string) {
       ];
       for (let t = 0; t < 4; t++) {
         const receiveDate = convertSerialDate(row[tierReceiveCols[t]]);
-        let submitDate = convertSerialDate(row[tierSubmitCols[t]]);
-        // Fallback: check next column if submit date is empty
-        if (!submitDate && tierSubmitCols[t] + 1 < row.length) {
-          submitDate = convertSerialDate(row[tierSubmitCols[t] + 1]);
-        }
+        const submitDate = convertSerialDate(row[tierSubmitCols[t]]);
         tiers.push({
           name: TIER_NAMES_FUEL[t],
           receiveDate: receiveDate || null,
@@ -113,8 +109,8 @@ async function searchPettyCash(slValue: string) {
       for (let t = 0; t < 3; t++) {
         const receiveDate = convertSerialDate(row[tierReceiveCols[t]]);
         let submitDate = convertSerialDate(row[tierSubmitCols[t]]);
-        // Fallback: check next column if submit date is empty
-        if (!submitDate && tierSubmitCols[t] + 1 < row.length) {
+        // Only for Petty Cash Central Accounts (tier 2): fallback to next column
+        if (t === 2 && !submitDate && tierSubmitCols[t] + 1 < row.length) {
           submitDate = convertSerialDate(row[tierSubmitCols[t] + 1]);
         }
         tiers.push({
