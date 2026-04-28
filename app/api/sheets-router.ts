@@ -39,7 +39,7 @@ async function getIdSectionEmails(): Promise<string[]> {
 }
 
 async function searchFuelBill(slValue: string) {
-  const rows = await getSheetData(env.googleSheet1Id, "Fuel Bill!A:Z");
+  const rows = await getSheetData(env.googleSheet1Id, "Fuel Bill!A:AZ");
   if (rows.length < 2) return null;
 
   const slCol = env.fuelBillSlCol;
@@ -88,7 +88,7 @@ async function searchFuelBill(slValue: string) {
 }
 
 async function searchPettyCash(slValue: string) {
-  const rows = await getSheetData(env.googleSheet1Id, "Petty Cash!A:Z");
+  const rows = await getSheetData(env.googleSheet1Id, "Petty Cash!A:AZ");
   if (rows.length < 2) return null;
 
   const slCol = env.pettyCashSlCol;
