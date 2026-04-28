@@ -25,7 +25,7 @@ export default function Dashboard() {
   const searchMutation = trpc.sheets.search.useMutation({
     onSuccess: (data) => {
       if (data.found && data.data) {
-        navigate("/result", { state: { data: data.data } });
+        navigate("/result", { state: { data: data.data, otherMatch: data.otherMatch } });
       } else {
         setSearchError(data.message || "BTS tracking number not found.");
       }

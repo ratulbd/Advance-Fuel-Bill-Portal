@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { format } from "date-fns";
 import { trpc } from "@/providers/trpc";
@@ -24,6 +24,7 @@ import {
   Send,
   ZoomIn,
   FileImage,
+  Fuel,
 } from "lucide-react";
 
 interface TierStatus {
@@ -88,7 +89,11 @@ export default function Result() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth({ redirectOnUnauthenticated: true });
-  const record: RecordData | null = location.state?.data || null;
+  const initialRecord: RecordData | null = location.state?.data || null;
+  const otherMatch: RecordData | null = location.state?.otherMatch || null;
+
+  const [activeRecord, setActiveRecord] = useState<RecordData | null>(initialRecord);
+  const record = activeRecord || initialRecord;
 
   const [formData, setFormData] = useState({
     dieselAg: "",
@@ -104,6 +109,12 @@ export default function Result() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
+
+  // Reset image state when switching records
+  useEffect(() => {
+    setImgLoading(true);
+    setImgError(false);
+  }, [record?.topSheetImage]);
 
   const submitMutation = trpc.sheets.submit.useMutation({
     onSuccess: (data) => {
@@ -221,9 +232,39 @@ export default function Result() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-xl">Bill Information</CardTitle>
-              <Badge variant="outline" className={typeColor}>
-                {typeLabel}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {otherMatch && (
+                  <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setActiveRecord(initialRecord)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        record.type === "fuel_bill"
+                          ? "bg-white text-orange-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <Fuel className="w-3.5 h-3.5" />
+                      Fuel Bill
+                    </button>
+                    <button
+                      onClick={() => setActiveRecord(otherMatch)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        record.type === "petty_cash"
+                          ? "bg-white text-emerald-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <FileImage className="w-3.5 h-3.5" />
+                      Petty Cash
+                    </button>
+                  </div>
+                )}
+                {!otherMatch && (
+                  <Badge variant="outline" className={typeColor}>
+                    {typeLabel}
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -373,6 +414,11 @@ export default function Result() {
                       {isPending && !tier.receiveDate && (
                         <p className="text-xs text-slate-400 mt-0.5">Pending</p>
                       )}
+                      <div
+                        className={`hidden md:block w-8 h-0.5 mx-auto mt-2 rounded-full transition-colors duration-500 ${
+                          isCompleted ? "bg-green-400" : "bg-slate-200"
+                        }`}
+                      />
                     </div>
                     {!isLast && (
                       <div

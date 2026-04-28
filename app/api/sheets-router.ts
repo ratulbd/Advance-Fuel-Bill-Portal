@@ -161,22 +161,23 @@ export const sheetsRouter = createRouter({
     .input(z.object({ sl: z.string().min(1) }))
     .mutation(async ({ input }) => {
       try {
-        // Search Fuel Bill first
         const fuelResult = await searchFuelBill(input.sl);
-        if (fuelResult) {
-          return { found: true, data: fuelResult };
-        }
-
-        // Search Petty Cash
         const pettyResult = await searchPettyCash(input.sl);
+
+        if (fuelResult && pettyResult) {
+          return { found: true, data: fuelResult, otherMatch: pettyResult };
+        }
+        if (fuelResult) {
+          return { found: true, data: fuelResult, otherMatch: null };
+        }
         if (pettyResult) {
-          return { found: true, data: pettyResult };
+          return { found: true, data: pettyResult, otherMatch: null };
         }
 
-        return { found: false, data: null, message: "BTS tracking number not found in Fuel Bill or Petty Cash records." };
+        return { found: false, data: null, otherMatch: null, message: "BTS tracking number not found in Fuel Bill or Petty Cash records." };
       } catch (error) {
         console.error("[sheets] Search error:", error);
-        return { found: false, data: null, message: "Search failed. Please try again later." };
+        return { found: false, data: null, otherMatch: null, message: "Search failed. Please try again later." };
       }
     }),
 
