@@ -69,7 +69,7 @@ async function getGoogleUserInfo(accessToken: string) {
 }
 
 export async function signSessionToken(payload: GoogleSessionPayload): Promise<string> {
-  const secret = new TextEncoder().encode(env.appSecret);
+  const secret = new TextEncoder().encode(env.jwtSecret);
   return new jose.SignJWT(payload as unknown as jose.JWTPayload)
     .setProtectedHeader({ alg: JWT_ALG })
     .setIssuedAt()
@@ -82,7 +82,7 @@ export async function verifySessionToken(token: string): Promise<GoogleSessionPa
     return null;
   }
   try {
-    const secret = new TextEncoder().encode(env.appSecret);
+    const secret = new TextEncoder().encode(env.jwtSecret);
     const { payload } = await jose.jwtVerify(token, secret, {
       algorithms: [JWT_ALG],
       clockTolerance: 60,
