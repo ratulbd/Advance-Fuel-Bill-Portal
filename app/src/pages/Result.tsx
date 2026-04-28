@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { format } from "date-fns";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,18 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, LogOut, CheckCircle, Clock, AlertCircle, ImageIcon, Send } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ArrowLeft,
+  LogOut,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  ImageIcon,
+  Send,
+  ZoomIn,
+  FileImage,
+} from "lucide-react";
 
 interface TierStatus {
   name: string;
@@ -35,6 +47,32 @@ interface RecordData {
   tiers: TierStatus[];
 }
 
+function convertDriveUrl(url: string): string {
+  if (!url) return "";
+  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  return url;
+}
+
+function formatSheetDate(value: string | null): string | null {
+  if (!value) return null;
+  const str = value.toString().trim();
+  if (!str) return null;
+  // Try parsing as a Date object first
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    return format(d, "dd MMM yyyy");
+  }
+  // Excel serial date fallback (rough)
+  const serial = Number(str);
+  if (!isNaN(serial) && serial > 30000) {
+    const excelEpoch = new Date(1899, 11, 30);
+    const fixed = new Date(excelEpoch.getTime() + serial * 86400000);
+    return format(fixed, "dd MMM yyyy");
+  }
+  return str;
+}
+
 export default function Result() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,6 +91,8 @@ export default function Result() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [imgLoading, setImgLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
 
   const submitMutation = trpc.sheets.submit.useMutation({
     onSuccess: (data) => {
@@ -132,11 +172,16 @@ export default function Result() {
 
   const isFuelBill = record.type === "fuel_bill";
   const typeLabel = isFuelBill ? "Fuel Bill" : "Petty Cash";
-  const typeColor = isFuelBill ? "bg-orange-100 text-orange-700" : "bg-emerald-100 text-emerald-700";
+  const typeColor = isFuelBill
+    ? "bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 border-orange-200"
+    : "bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 border-emerald-200";
+
+  // Determine active tier index
+  const activeTierIndex = record.tiers.findIndex((t) => !t.completed);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
@@ -146,7 +191,7 @@ export default function Result() {
             <h1 className="font-bold text-slate-800 text-lg">Tracking Details</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8">
+            <Avatar className="w-8 h-8 ring-2 ring-slate-100">
               <AvatarImage src={user?.avatar || ""} />
               <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
                 {user?.name?.charAt(0) || "U"}
@@ -161,11 +206,13 @@ export default function Result() {
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Record Details Card */}
-        <Card className="shadow-md">
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-xl">Bill Information</CardTitle>
-              <Badge className={typeColor}>{typeLabel}</Badge>
+              <Badge variant="outline" className={typeColor}>
+                {typeLabel}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -200,7 +247,9 @@ export default function Result() {
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label className="text-xs text-slate-500 uppercase tracking-wider">Field Remarks</Label>
-                <p className="text-slate-700 bg-slate-50 p-2 rounded-md">{record.fieldRemarks || "—"}</p>
+                <p className="text-slate-700 bg-slate-50 p-2 rounded-md border border-slate-100">
+                  {record.fieldRemarks || "—"}
+                </p>
               </div>
 
               {record.topSheetImage && (
@@ -209,29 +258,45 @@ export default function Result() {
                   <Dialog>
                     <DialogTrigger asChild>
                       <div className="relative group cursor-pointer max-w-xs">
-                        <img
-                          src={record.topSheetImage}
-                          alt="Bill Top Sheet"
-                          className="w-full h-32 object-cover rounded-lg border border-slate-200"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ImageIcon className="w-8 h-8 text-white" />
-                        </div>
+                        {imgLoading && !imgError && (
+                          <Skeleton className="w-full h-32 rounded-lg" />
+                        )}
+                        {!imgError ? (
+                          <img
+                            src={convertDriveUrl(record.topSheetImage)}
+                            alt="Bill Top Sheet"
+                            className={`w-full h-32 object-cover rounded-lg border border-slate-200 transition-transform duration-300 group-hover:scale-[1.02] ${
+                              imgLoading ? "hidden" : "block"
+                            }`}
+                            onLoad={() => setImgLoading(false)}
+                            onError={() => {
+                              setImgLoading(false);
+                              setImgError(true);
+                            }}
+                          />
+                        ) : null}
+                        {!imgError && (
+                          <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ZoomIn className="w-8 h-8 text-white" />
+                          </div>
+                        )}
+                        {imgError && (
+                          <div className="w-full h-32 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-400">
+                            <FileImage className="w-8 h-8" />
+                            <span className="text-sm">Unable to load image</span>
+                          </div>
+                        )}
                       </div>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl">
-                      <img
-                        src={record.topSheetImage}
-                        alt="Bill Top Sheet Enlarged"
-                        className="w-full max-h-[80vh] object-contain rounded-lg"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    </DialogContent>
+                    {!imgError && (
+                      <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none">
+                        <img
+                          src={convertDriveUrl(record.topSheetImage)}
+                          alt="Bill Top Sheet Enlarged"
+                          className="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        />
+                      </DialogContent>
+                    )}
                   </Dialog>
                 </div>
               )}
@@ -240,7 +305,7 @@ export default function Result() {
         </Card>
 
         {/* Approval Workflow Card */}
-        <Card className="shadow-md">
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl">Current Position</CardTitle>
             <p className="text-sm text-slate-500">
@@ -251,41 +316,55 @@ export default function Result() {
             <div className="flex flex-col md:flex-row gap-2">
               {record.tiers.map((tier, index) => {
                 const isLast = index === record.tiers.length - 1;
-                const waiting = !tier.completed && index > 0 && record.tiers[index - 1].completed;
+                const isActive = index === activeTierIndex;
+                const isCompleted = tier.completed;
+                const isPending = !isCompleted && !isActive;
+
+                let circleClass = "bg-slate-200 text-slate-500";
+                let icon = <span className="text-sm font-bold">{index + 1}</span>;
+
+                if (isCompleted) {
+                  circleClass = "bg-green-500 text-white shadow-green-200 shadow-lg";
+                  icon = <CheckCircle className="w-5 h-5" />;
+                } else if (isActive) {
+                  circleClass = "bg-blue-500 text-white shadow-blue-200 shadow-lg animate-pulse";
+                  icon = <Clock className="w-5 h-5" />;
+                }
 
                 return (
                   <div key={tier.name} className="flex-1 flex flex-row md:flex-col items-center gap-2">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                        tier.completed
-                          ? "bg-green-500 text-white"
-                          : waiting
-                          ? "bg-amber-500 text-white"
-                          : "bg-slate-200 text-slate-500"
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-500 ${circleClass}`}
                     >
-                      {tier.completed ? (
-                        <CheckCircle className="w-5 h-5" />
-                      ) : waiting ? (
-                        <Clock className="w-5 h-5" />
-                      ) : (
-                        <span className="text-sm font-bold">{index + 1}</span>
-                      )}
+                      {icon}
                     </div>
                     <div className="flex-1 text-center">
-                      <p className="font-medium text-sm text-slate-800">{tier.name}</p>
+                      <p className={`font-medium text-sm ${isActive ? "text-blue-700" : "text-slate-800"}`}>
+                        {tier.name}
+                      </p>
                       {tier.receiveDate && (
-                        <p className="text-xs text-slate-500">Received: {tier.receiveDate}</p>
+                        <p className="text-xs text-slate-500">
+                          Received: {formatSheetDate(tier.receiveDate)}
+                        </p>
                       )}
                       {tier.submitDate && (
-                        <p className="text-xs text-slate-500">Submitted: {tier.submitDate}</p>
+                        <p className="text-xs text-slate-500">
+                          Submitted: {formatSheetDate(tier.submitDate)}
+                        </p>
                       )}
-                      {waiting && (
-                        <p className="text-xs text-amber-600 font-medium">Waiting for approval</p>
+                      {isActive && (
+                        <p className="text-xs text-blue-600 font-medium mt-0.5">In Progress</p>
+                      )}
+                      {isPending && !tier.receiveDate && (
+                        <p className="text-xs text-slate-400 mt-0.5">Pending</p>
                       )}
                     </div>
                     {!isLast && (
-                      <div className="hidden md:block w-8 h-0.5 bg-slate-300 self-center" />
+                      <div
+                        className={`hidden md:block w-8 h-0.5 self-center transition-colors duration-500 ${
+                          isCompleted ? "bg-green-400" : "bg-slate-200"
+                        }`}
+                      />
                     )}
                   </div>
                 );
@@ -295,14 +374,14 @@ export default function Result() {
         </Card>
 
         {/* Data Collection Form */}
-        <Card className="shadow-md">
+        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl">Fuel & Purchase Information</CardTitle>
             <p className="text-sm text-slate-500">All fuel fields are mandatory. Enter 0 if not applicable.</p>
           </CardHeader>
           <CardContent>
             {submitSuccess ? (
-              <div className="text-center py-8 space-y-4">
+              <div className="text-center py-8 space-y-4 animate-in fade-in zoom-in duration-500">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
                 <h3 className="text-xl font-bold text-slate-800">Submitted Successfully!</h3>
                 <p className="text-slate-600">Your data has been recorded in the system.</p>
@@ -433,7 +512,7 @@ export default function Result() {
                 </div>
 
                 {formData.purchaseSource === "Cash purchase from enlisted pump" && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                     <Label htmlFor="pumpName">
                       Pump Name <span className="text-red-500">*</span>
                     </Label>
@@ -488,7 +567,7 @@ export default function Result() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700"
+                  className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700 transition-colors"
                   disabled={submitMutation.isPending}
                 >
                   {submitMutation.isPending ? (
