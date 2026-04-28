@@ -47,12 +47,14 @@ async function searchFuelBill(slValue: string) {
         env.fuelBillTier4SubmitCol,
       ];
       for (let t = 0; t < 4; t++) {
-        const receiveDate = row[tierReceiveCols[t]] || "";
-        const submitDate = row[tierSubmitCols[t]] || "";
+        const receiveRaw = row[tierReceiveCols[t]];
+        const submitRaw = row[tierSubmitCols[t]];
+        const receiveDate = receiveRaw !== undefined && receiveRaw !== null ? receiveRaw.toString().trim() : "";
+        const submitDate = submitRaw !== undefined && submitRaw !== null ? submitRaw.toString().trim() : "";
         tiers.push({
           name: TIER_NAMES_FUEL[t],
-          receiveDate: receiveDate ? receiveDate.toString() : null,
-          submitDate: submitDate ? submitDate.toString() : null,
+          receiveDate: receiveDate || null,
+          submitDate: submitDate || null,
           completed: !!receiveDate && !!submitDate,
         });
       }
@@ -94,12 +96,14 @@ async function searchPettyCash(slValue: string) {
         env.pettyCashTier3SubmitCol,
       ];
       for (let t = 0; t < 3; t++) {
-        const receiveDate = row[tierReceiveCols[t]] || "";
-        const submitDate = row[tierSubmitCols[t]] || "";
+        const receiveRaw = row[tierReceiveCols[t]];
+        const submitRaw = row[tierSubmitCols[t]];
+        const receiveDate = receiveRaw !== undefined && receiveRaw !== null ? receiveRaw.toString().trim() : "";
+        const submitDate = submitRaw !== undefined && submitRaw !== null ? submitRaw.toString().trim() : "";
         tiers.push({
           name: TIER_NAMES_PETTY[t],
-          receiveDate: receiveDate ? receiveDate.toString() : null,
-          submitDate: submitDate ? submitDate.toString() : null,
+          receiveDate: receiveDate || null,
+          submitDate: submitDate || null,
           completed: !!receiveDate && !!submitDate,
         });
       }

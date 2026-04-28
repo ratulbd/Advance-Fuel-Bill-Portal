@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, LogOut, AlertCircle, CheckCircle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Search, LogOut, AlertCircle, CheckCircle, Fuel, FileSearch, TrendingUp } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export default function Dashboard() {
   if (validation && !validation.valid) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full shadow-lg border-slate-100">
           <CardHeader className="text-center">
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-2" />
             <CardTitle>Access Denied</CardTitle>
@@ -77,63 +78,94 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white border-b border-slate-200 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Fuel className="w-5 h-5 text-white" />
             </div>
-            <h1 className="font-bold text-slate-800 text-lg">BTS Tracking</h1>
+            <div>
+              <h1 className="font-bold text-slate-800 text-lg leading-tight">Telecom Advance Portal</h1>
+              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Fuel &amp; Petty Cash</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {validation?.valid && (
-              <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 Verified
               </Badge>
             )}
             <div className="flex items-center gap-2">
-              <Avatar className="w-8 h-8">
+              <Avatar className="w-8 h-8 ring-2 ring-slate-100">
                 <AvatarImage src={user?.avatar || ""} />
                 <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
                   {user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-slate-600 hidden sm:inline">{user?.name}</span>
+              <span className="text-sm text-slate-600 hidden sm:inline font-medium">{user?.name}</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={logout}>
+            <Button variant="ghost" size="sm" onClick={logout} className="text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-12">
-        <Card className="shadow-lg">
-          <CardHeader className="text-center pb-2">
+      <main className="max-w-2xl mx-auto px-4 py-12 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 bg-white">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                <FileSearch className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">2</p>
+                <p className="text-xs text-slate-500">Record Types</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 bg-white">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">4</p>
+                <p className="text-xs text-slate-500">Approval Tiers</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="shadow-xl border-slate-100 bg-white overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700" />
+          <CardHeader className="text-center pb-2 pt-6">
+            <div className="mx-auto w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-3">
+              <Search className="w-6 h-6 text-blue-600" />
+            </div>
             <CardTitle className="text-2xl font-bold text-slate-800">Search Tracking Number</CardTitle>
             <p className="text-slate-500 text-sm mt-1">
-              Enter a BTS tracking number to view bill details
+              Enter a BTS tracking number to view bill details and approval status
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6 pb-6">
             <form onSubmit={handleSearch} className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <Input
                   type="text"
                   inputMode="numeric"
                   placeholder="Enter tracking number (SL)..."
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="pl-10 h-12 text-lg"
+                  className="pl-10 h-12 text-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all"
                 />
               </div>
 
               {searchError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2 animate-in slide-in-from-top-2 duration-300">
                   <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
                   <p className="text-sm text-red-700">{searchError}</p>
                 </div>
@@ -141,7 +173,7 @@ export default function Dashboard() {
 
               <Button
                 type="submit"
-                className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700"
+                className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-[1.01]"
                 disabled={searchMutation.isPending}
               >
                 {searchMutation.isPending ? (
@@ -152,19 +184,36 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <Search className="w-5 h-5 mr-2" />
-                    Search
+                    Search Records
                   </>
                 )}
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <h3 className="font-semibold text-slate-700 text-sm mb-2">Search Priority</h3>
-              <ol className="text-sm text-slate-600 space-y-1 list-decimal list-inside">
-                <li>Fuel Bill records (Column B)</li>
-                <li>Petty Cash records (Column B)</li>
-                <li>If not found, a "not found" message will display</li>
-              </ol>
+            <Separator className="my-5" />
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-slate-700 text-sm">Search Coverage</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 border border-orange-100">
+                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                    <Fuel className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Fuel Bill</p>
+                    <p className="text-xs text-slate-500">4-tier workflow</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                    <FileSearch className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Petty Cash</p>
+                    <p className="text-xs text-slate-500">3-tier workflow</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

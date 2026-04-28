@@ -49,8 +49,10 @@ interface RecordData {
 
 function convertDriveUrl(url: string): string {
   if (!url) return "";
-  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (match) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (openMatch) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
   return url;
 }
 
@@ -243,7 +245,11 @@ export default function Result() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-slate-500 uppercase tracking-wider">Bill Submit Amount</Label>
-                <p className="font-semibold text-slate-800">{record.billSubmitAmount || "—"}</p>
+                <p className="font-semibold text-slate-800">
+                  {record.billSubmitAmount
+                    ? `৳ ${Number(record.billSubmitAmount).toLocaleString("en-BD")}`
+                    : "—"}
+                </p>
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label className="text-xs text-slate-500 uppercase tracking-wider">Field Remarks</Label>
