@@ -208,24 +208,31 @@ export default function Result() {
   const activeTierIndex = record.tiers.findIndex((t) => !t.completed);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 relative overflow-hidden">
+      {/* Animated background blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+      </div>
+      <header className="bg-white/60 backdrop-blur-xl border-b border-white/40 shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="hover:bg-slate-100/80">
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back
             </Button>
-            <h1 className="font-bold text-slate-800 text-lg">Tracking Details</h1>
+            <h1 className="font-bold text-slate-800 text-lg bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              Tracking Details
+            </h1>
           </div>
           <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8 ring-2 ring-slate-100">
+            <Avatar className="w-9 h-9 ring-2 ring-blue-100 shadow-sm">
               <AvatarImage src={user?.avatar || ""} />
-              <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+              <AvatarFallback className="bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 text-sm font-bold">
                 {user?.name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="sm" onClick={logout}>
+            <Button variant="ghost" size="sm" onClick={logout} className="hover:bg-red-50 hover:text-red-500 transition-colors">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -234,7 +241,7 @@ export default function Result() {
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Record Details Card */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-500 border-white/50 bg-white/70 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-xl">Bill Information</CardTitle>
@@ -406,7 +413,7 @@ export default function Result() {
         </Card>
 
         {/* Approval Workflow Card */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-500 border-white/50 bg-white/70 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl">Current Position</CardTitle>
             <p className="text-sm text-slate-500">
@@ -421,21 +428,24 @@ export default function Result() {
                 const isCompleted = tier.completed;
                 const isPending = !isCompleted && !isActive;
 
-                let circleClass = "bg-slate-200 text-slate-500";
+                let circleClass = "bg-slate-100 text-slate-400 border-2 border-slate-200";
                 let icon = <span className="text-sm font-bold">{index + 1}</span>;
+                let glowClass = "";
 
                 if (isCompleted) {
-                  circleClass = "bg-green-500 text-white shadow-green-200 shadow-lg";
+                  circleClass = "bg-gradient-to-br from-green-400 to-green-600 text-white border-2 border-green-400";
+                  glowClass = "shadow-lg shadow-green-500/30";
                   icon = <CheckCircle className="w-5 h-5" />;
                 } else if (isActive) {
-                  circleClass = "bg-blue-500 text-white shadow-blue-200 shadow-lg animate-pulse";
+                  circleClass = "bg-gradient-to-br from-blue-400 to-blue-600 text-white border-2 border-blue-400";
+                  glowClass = "shadow-lg shadow-blue-500/40 animate-pulse";
                   icon = <Clock className="w-5 h-5" />;
                 }
 
                 return (
                   <div key={tier.name} className="flex-1 flex flex-row md:flex-col items-center gap-2">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-500 ${circleClass}`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all duration-500 ${circleClass} ${glowClass}`}
                     >
                       {icon}
                     </div>
@@ -462,9 +472,11 @@ export default function Result() {
 
                     </div>
                     {!isLast && (
-                      <ChevronRight className={`hidden md:block w-5 h-5 self-center shrink-0 transition-colors duration-500 ${
-                        isCompleted ? "text-green-400" : "text-slate-300"
-                      }`} />
+                      <div className="hidden md:flex items-center self-center">
+                        <ChevronRight className={`w-6 h-6 transition-all duration-500 ${
+                          isCompleted ? "text-green-400 scale-110" : "text-slate-300"
+                        }`} />
+                      </div>
                     )}
                   </div>
                 );
@@ -474,7 +486,7 @@ export default function Result() {
         </Card>
 
         {/* Data Collection Form */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 border-slate-100">
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-500 border-white/50 bg-white/70 backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl">Submit Fuel Purchase Additional Information</CardTitle>
             <p className="text-sm text-slate-500">All fuel fields are mandatory. Enter 0 if not applicable.</p>
