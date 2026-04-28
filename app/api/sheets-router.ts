@@ -16,6 +16,19 @@ const TIER_NAMES_PETTY = [
   "Central Accounts",
 ];
 
+function convertSerialDate(value: unknown): string {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "number" && value > 30000) {
+    // Google Sheets / Excel serial date (epoch: Dec 30, 1899)
+    const epoch = new Date(1899, 11, 30);
+    const date = new Date(epoch.getTime() + value * 86400000);
+    return date.toISOString().split("T")[0];
+  }
+  const str = value.toString().trim();
+  if (str === "-" || str === "0") return "";
+  return str;
+}
+
 async function getIdSectionEmails(): Promise<string[]> {
   const rows = await getSheetData(env.googleIdSheetId, "ID!A:Z");
   const emailCol = env.idSectionEmailCol;
@@ -47,10 +60,12 @@ async function searchFuelBill(slValue: string) {
         env.fuelBillTier4SubmitCol,
       ];
       for (let t = 0; t < 4; t++) {
-        const receiveRaw = row[tierReceiveCols[t]];
-        const submitRaw = row[tierSubmitCols[t]];
-        const receiveDate = receiveRaw !== undefined && receiveRaw !== null ? receiveRaw.toString().trim() : "";
-        const submitDate = submitRaw !== undefined && submitRaw !== null ? submitRaw.toString().trim() : "";
+        const receiveDate = convertSerialDate(row[tierReceiveCols[t]]);
+        let submitDate = convertSerialDate(row[tierSubmitCols[t]]);
+        // Fallback: check next column if submit date is empty
+        if (!submitDate && tierSubmitCols[t] + 1 < row.length) {
+          submitDate = convertSerialDate(row[tierSubmitCols[t] + 1]);
+        }
         tiers.push({
           name: TIER_NAMES_FUEL[t],
           receiveDate: receiveDate || null,
@@ -96,10 +111,12 @@ async function searchPettyCash(slValue: string) {
         env.pettyCashTier3SubmitCol,
       ];
       for (let t = 0; t < 3; t++) {
-        const receiveRaw = row[tierReceiveCols[t]];
-        const submitRaw = row[tierSubmitCols[t]];
-        const receiveDate = receiveRaw !== undefined && receiveRaw !== null ? receiveRaw.toString().trim() : "";
-        const submitDate = submitRaw !== undefined && submitRaw !== null ? submitRaw.toString().trim() : "";
+        const receiveDate = convertSerialDate(row[tierReceiveCols[t]]);
+        let submitDate = convertSerialDate(row[tierSubmitCols[t]]);
+        // Fallback: check next column if submit date is empty
+        if (!submitDate && tierSubmitCols[t] + 1 < row.length) {
+          submitDate = convertSerialDate(row[tierSubmitCols[t] + 1]);
+        }
         tiers.push({
           name: TIER_NAMES_PETTY[t],
           receiveDate: receiveDate || null,

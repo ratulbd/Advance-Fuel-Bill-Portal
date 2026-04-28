@@ -50,9 +50,9 @@ interface RecordData {
 function convertDriveUrl(url: string): string {
   if (!url) return "";
   const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`;
+  if (fileMatch) return `https://drive.google.com/thumbnail?id=${fileMatch[1]}&sz=w1000`;
   const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (openMatch) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+  if (openMatch) return `https://drive.google.com/thumbnail?id=${openMatch[1]}&sz=w1000`;
   return url;
 }
 
@@ -60,18 +60,27 @@ function formatSheetDate(value: string | null): string | null {
   if (!value) return null;
   const str = value.toString().trim();
   if (!str) return null;
-  // Try parsing as a Date object first
-  const d = new Date(str);
-  if (!isNaN(d.getTime())) {
-    return format(d, "dd MMM yyyy");
+
+  // Handle YYYY-MM-DD from backend
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const d = new Date(str + "T00:00:00");
+    if (!isNaN(d.getTime())) return format(d, "dd MMM yyyy");
   }
-  // Excel serial date fallback (rough)
+
+  // Handle serial numbers (e.g. 45994) BEFORE generic Date parsing
   const serial = Number(str);
-  if (!isNaN(serial) && serial > 30000) {
-    const excelEpoch = new Date(1899, 11, 30);
-    const fixed = new Date(excelEpoch.getTime() + serial * 86400000);
+  if (!isNaN(serial) && serial > 30000 && serial < 50000) {
+    const epoch = new Date(1899, 11, 30);
+    const fixed = new Date(epoch.getTime() + serial * 86400000);
     return format(fixed, "dd MMM yyyy");
   }
+
+  // Try parsing as a generic Date
+  const d = new Date(str);
+  if (!isNaN(d.getTime()) && d.getFullYear() > 1900 && d.getFullYear() < 2100) {
+    return format(d, "dd MMM yyyy");
+  }
+
   return str;
 }
 
