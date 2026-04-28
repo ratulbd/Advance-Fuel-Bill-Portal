@@ -17,7 +17,7 @@ const TIER_NAMES_PETTY = [
 ];
 
 async function getIdSectionEmails(): Promise<string[]> {
-  const rows = await getSheetData(env.googleSheet1Id, "ID Section!A:Z");
+  const rows = await getSheetData(env.googleIdSheetId, "ID!A:Z");
   const emailCol = env.idSectionEmailCol;
   return rows
     .slice(1) // skip header

@@ -30,6 +30,7 @@ export const env = {
   // Sheet IDs
   googleSheet1Id: required("GOOGLE_SHEET_1_ID"),
   googleSheet2Id: required("GOOGLE_SHEET_2_ID"),
+  googleIdSheetId: process.env.GOOGLE_ID_SHEET_ID ?? required("GOOGLE_SHEET_1_ID"),
 
   // Caching
   sheetsCacheTtl: intEnv("SHEETS_CACHE_TTL", 60), // Default 60 seconds

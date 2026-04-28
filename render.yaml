@@ -4,7 +4,7 @@ services:
     env: node
     rootDir: app
     buildCommand: npm install && npm run build
-    startCommand: npm run db:migrate && npm start
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -25,4 +25,6 @@ services:
       - key: GOOGLE_SHEET_1_ID
         sync: false
       - key: GOOGLE_SHEET_2_ID
+        sync: false
+      - key: GOOGLE_ID_SHEET_ID
         sync: false
