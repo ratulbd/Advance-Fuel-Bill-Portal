@@ -72,15 +72,15 @@ async function searchFuelBill(slValue: string) {
 
       return {
         type: "fuel_bill" as const,
-        sl: row[slCol] || "",
-        subCenterName: row[env.fuelBillSubCenterCol] || "",
-        circleName: row[env.fuelBillCircleCol] || "",
-        billingType: row[env.fuelBillBillingTypeCol] || "",
-        billPeriod: row[env.fuelBillBillPeriodCol] || "",
-        billSubmitAmount: row[env.fuelBillBillSubmitAmountCol] || "",
+        sl: (row[slCol] ?? "").toString(),
+        subCenterName: (row[env.fuelBillSubCenterCol] ?? "").toString(),
+        circleName: (row[env.fuelBillCircleCol] ?? "").toString(),
+        billingType: (row[env.fuelBillBillingTypeCol] ?? "").toString(),
+        billPeriod: (row[env.fuelBillBillPeriodCol] ?? "").toString(),
+        billSubmitAmount: (row[env.fuelBillBillSubmitAmountCol] ?? "").toString(),
         billSentDate: convertSerialDate(row[env.fuelBillBillSentDateCol]) || null,
-        topSheetImage: row[env.fuelBillTopSheetImageCol] || "",
-        fieldRemarks: row[env.fuelBillFieldRemarksCol] || "",
+        topSheetImage: (row[env.fuelBillTopSheetImageCol] ?? "").toString(),
+        fieldRemarks: (row[env.fuelBillFieldRemarksCol] ?? "").toString(),
         tiers,
       };
     }
@@ -124,15 +124,15 @@ async function searchPettyCash(slValue: string) {
 
       return {
         type: "petty_cash" as const,
-        sl: row[slCol] || "",
-        subCenterName: row[env.pettyCashSubCenterCol] || "",
-        circleName: row[env.pettyCashCircleCol] || "",
-        purchaseType: row[env.pettyCashPurchaseTypeCol] || "",
-        billPeriod: row[env.pettyCashBillPeriodCol] || "",
-        billSubmitAmount: row[env.pettyCashBillSubmitAmountCol] || "",
+        sl: (row[slCol] ?? "").toString(),
+        subCenterName: (row[env.pettyCashSubCenterCol] ?? "").toString(),
+        circleName: (row[env.pettyCashCircleCol] ?? "").toString(),
+        purchaseType: (row[env.pettyCashPurchaseTypeCol] ?? "").toString(),
+        billPeriod: (row[env.pettyCashBillPeriodCol] ?? "").toString(),
+        billSubmitAmount: (row[env.pettyCashBillSubmitAmountCol] ?? "").toString(),
         billSentDate: convertSerialDate(row[env.pettyCashBillSentDateCol]) || null,
-        topSheetImage: row[env.pettyCashTopSheetImageCol] || "",
-        fieldRemarks: row[env.pettyCashFieldRemarksCol] || "",
+        topSheetImage: (row[env.pettyCashTopSheetImageCol] ?? "").toString(),
+        fieldRemarks: (row[env.pettyCashFieldRemarksCol] ?? "").toString(),
         tiers,
       };
     }
