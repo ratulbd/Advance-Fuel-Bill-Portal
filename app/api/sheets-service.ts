@@ -83,3 +83,29 @@ export async function getSheetTabs(spreadsheetId: string): Promise<string[]> {
   const res = await sheets.spreadsheets.get({ spreadsheetId });
   return (res.data.sheets || []).map((s) => s.properties?.title || "").filter(Boolean);
 }
+
+export async function checkDuplicateInSheet(
+  spreadsheetId: string,
+  tabName: string,
+  columnIndex: number,
+  value: string
+): Promise<boolean> {
+  const rows = await getSheetData(spreadsheetId, `${tabName}!A:Z`);
+  const target = value.trim().toLowerCase();
+  for (const row of rows) {
+    const cell = (row[columnIndex] || "").toString().trim().toLowerCase();
+    if (cell === target) return true;
+  }
+  return false;
+}
+
+export async function ensureSheetHeaders(
+  spreadsheetId: string,
+  tabName: string,
+  headers: string[]
+) {
+  const rows = await getSheetData(spreadsheetId, `${tabName}!A1:Z1`);
+  if (rows.length === 0 || rows[0].length === 0 || rows[0].every((v) => !v)) {
+    await appendToSheet(spreadsheetId, `${tabName}!A1`, [headers]);
+  }
+}

@@ -111,6 +111,7 @@ export default function Result() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submittedData, setSubmittedData] = useState<Record<string, unknown> | null>(null);
   const [imgLoading, setImgLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
   const [imgZoom, setImgZoom] = useState(1);
@@ -120,12 +121,16 @@ export default function Result() {
     setImgLoading(true);
     setImgError(false);
     setImgZoom(1);
-  }, [record?.topSheetImage]);
+    setSubmitSuccess(false);
+    setSubmittedData(null);
+    setFormErrors({});
+  }, [record?.sl]);
 
   const submitMutation = trpc.sheets.submit.useMutation({
     onSuccess: (data) => {
       if (data.success) {
         setSubmitSuccess(true);
+        setSubmittedData(data.submitted || null);
       } else {
         setFormErrors({ submit: data.message || "Submit failed" });
       }
@@ -134,6 +139,8 @@ export default function Result() {
       setFormErrors({ submit: error.message || "Submit failed" });
     },
   });
+
+  const canSubmit = record.tiers.length > 0 && !record.tiers[0].completed;
 
   if (!record) {
     return (
@@ -187,6 +194,15 @@ export default function Result() {
     submitMutation.mutate({
       sl: record.sl,
       type: record.type,
+      circle: record.circleName,
+      subCenter: record.subCenterName,
+      billingType: isFuelBill ? record.billingType : record.purchaseType,
+      billPeriod: record.billPeriod,
+      billSentDate: record.billSentDate || "",
+      billSubmitAmount: record.billSubmitAmount,
+      fieldRemarks: record.fieldRemarks,
+      topSheetImage: record.topSheetImage,
+      currentPosition: record.tiers.find((t) => !t.completed)?.name || "Completed",
       dieselAg: Number(formData.dieselAg),
       octanePg: Number(formData.octanePg),
       petrolPg: Number(formData.petrolPg),
@@ -494,33 +510,46 @@ export default function Result() {
             <p className="text-sm text-slate-500">All fuel fields are mandatory. Enter 0 if not applicable.</p>
           </CardHeader>
           <CardContent>
-            {submitSuccess ? (
-              <div className="text-center py-8 space-y-4 animate-in fade-in zoom-in duration-500">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-                <h3 className="text-xl font-bold text-slate-800">Submitted Successfully!</h3>
-                <p className="text-slate-600">Your data has been recorded in the system.</p>
+            {submitSuccess && submittedData ? (
+              <div className="space-y-5 animate-in fade-in zoom-in duration-500">
+                <div className="flex items-center gap-3 text-green-600">
+                  <CheckCircle className="w-8 h-8" />
+                  <h3 className="text-xl font-bold text-slate-800">Submitted Successfully!</h3>
+                </div>
+                <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 space-y-3">
+                  <h4 className="font-semibold text-slate-700 text-sm uppercase tracking-wider">Submission Summary</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-slate-500">BTS Tracker:</span> <span className="font-medium text-slate-800">{String(submittedData.sl)}</span></div>
+                    <div><span className="text-slate-500">Type:</span> <span className="font-medium text-slate-800">{submittedData.type === "fuel_bill" ? "Fuel Bill" : "Petty Cash"}</span></div>
+                    <div><span className="text-slate-500">Circle:</span> <span className="font-medium text-slate-800">{String(submittedData.circle || "—")}</span></div>
+                    <div><span className="text-slate-500">Sub Center:</span> <span className="font-medium text-slate-800">{String(submittedData.subCenter || "—")}</span></div>
+                    <div><span className="text-slate-500">Bill Period:</span> <span className="font-medium text-slate-800">{String(submittedData.billPeriod || "—")}</span></div>
+                    <div><span className="text-slate-500">Current Position:</span> <span className="font-medium text-slate-800">{String(submittedData.currentPosition || "—")}</span></div>
+                    <div><span className="text-slate-500">Diesel-AG:</span> <span className="font-medium text-slate-800">{String(submittedData.dieselAg)} Ltr</span></div>
+                    <div><span className="text-slate-500">Octane-PG:</span> <span className="font-medium text-slate-800">{String(submittedData.octanePg)} Ltr</span></div>
+                    <div><span className="text-slate-500">Petrol-PG:</span> <span className="font-medium text-slate-800">{String(submittedData.petrolPg)} Ltr</span></div>
+                    <div><span className="text-slate-500">Diesel-Vehicle:</span> <span className="font-medium text-slate-800">{String(submittedData.dieselVehicle)} Ltr</span></div>
+                    <div><span className="text-slate-500">Purchase Source:</span> <span className="font-medium text-slate-800">{String(submittedData.purchaseSource)}</span></div>
+                    {submittedData.pumpName && <div><span className="text-slate-500">Pump Name:</span> <span className="font-medium text-slate-800">{String(submittedData.pumpName)}</span></div>}
+                    <div><span className="text-slate-500">Amount Return:</span> <span className="font-medium text-slate-800">৳ {Number(submittedData.amountReturnViaBank).toLocaleString("en-BD")}</span></div>
+                  </div>
+                </div>
                 <div className="flex gap-3 justify-center">
                   <Button onClick={() => navigate("/")} variant="outline">
                     Back to Search
                   </Button>
-                  <Button
-                    onClick={() => {
-                      setSubmitSuccess(false);
-                      setFormData({
-                        dieselAg: "",
-                        octanePg: "",
-                        petrolPg: "",
-                        dieselVehicle: "",
-                        purchaseSource: "",
-                        pumpName: "",
-                        amountReturnViaBank: "",
-                        remarks: "",
-                      });
-                    }}
-                  >
-                    Submit Another
-                  </Button>
                 </div>
+              </div>
+            ) : !canSubmit ? (
+              <div className="text-center py-8 space-y-4">
+                <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+                <h3 className="text-lg font-bold text-slate-800">Submission Closed</h3>
+                <p className="text-slate-600">
+                  The first approval workflow is already completed. You can only submit data when the first tier is pending or in progress.
+                </p>
+                <Button onClick={() => navigate("/")} variant="outline">
+                  Back to Search
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">

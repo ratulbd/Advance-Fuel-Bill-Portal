@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRouter, authedQuery } from "./middleware";
-import { getSheetData, appendToSheet } from "./sheets-service";
+import { getSheetData, appendToSheet, checkDuplicateInSheet, ensureSheetHeaders } from "./sheets-service";
 import { env } from "./lib/env";
 
 const TIER_NAMES_FUEL = [
@@ -211,6 +211,15 @@ export const sheetsRouter = createRouter({
       z.object({
         sl: z.string().min(1),
         type: z.enum(["fuel_bill", "petty_cash"]),
+        circle: z.string().optional(),
+        subCenter: z.string().optional(),
+        billingType: z.string().optional(),
+        billPeriod: z.string().optional(),
+        billSentDate: z.string().optional(),
+        billSubmitAmount: z.string().optional(),
+        fieldRemarks: z.string().optional(),
+        topSheetImage: z.string().optional(),
+        currentPosition: z.string().optional(),
         dieselAg: z.number().min(0),
         octanePg: z.number().min(0),
         petrolPg: z.number().min(0),
@@ -225,6 +234,18 @@ export const sheetsRouter = createRouter({
       try {
         const userEmail = ctx.user?.email || "unknown";
         const userName = ctx.user?.name || "unknown";
+
+        // Check duplicate in Sheet 2 (SL is in column D, index 3)
+        const isDuplicate = await checkDuplicateInSheet(
+          env.googleSheet2Id,
+          env.sheet2OutputTab,
+          3,
+          input.sl
+        );
+        if (isDuplicate) {
+          return { success: false, message: `BTS Tracker Number ${input.sl} has already been submitted.` };
+        }
+
         const now = new Intl.DateTimeFormat("en-GB", {
           timeZone: "Asia/Dhaka",
           year: "numeric",
@@ -236,12 +257,30 @@ export const sheetsRouter = createRouter({
           hour12: false,
         }).format(new Date());
 
+        // Ensure headers exist
+        await ensureSheetHeaders(env.googleSheet2Id, env.sheet2OutputTab, [
+          "Submission Date", "User Email", "User Name", "BTS Tracker Number", "Type",
+          "Circle", "Sub Center", "Billing Type", "Bill Period", "Bill Sent Date",
+          "Bill Submit Amount", "Field Remarks", "Bill Top Sheet Image", "Current Position Status",
+          "Diesel-AG", "Octane-PG", "Petrol-PG", "Diesel-Vehicle",
+          "Purchase Source", "Pump Name", "Amount Return via Bank", "Remarks",
+        ]);
+
         const row = [
           now,
           userEmail,
           userName,
           input.sl,
           input.type,
+          input.circle || "",
+          input.subCenter || "",
+          input.billingType || "",
+          input.billPeriod || "",
+          input.billSentDate || "",
+          input.billSubmitAmount || "",
+          input.fieldRemarks || "",
+          input.topSheetImage || "",
+          input.currentPosition || "",
           input.dieselAg,
           input.octanePg,
           input.petrolPg,
@@ -254,11 +293,15 @@ export const sheetsRouter = createRouter({
 
         await appendToSheet(
           env.googleSheet2Id,
-          `${env.sheet2OutputTab}!A:M`,
+          `${env.sheet2OutputTab}!A:V`,
           [row]
         );
 
-        return { success: true, message: "Data submitted successfully" };
+        return {
+          success: true,
+          message: "Data submitted successfully",
+          submitted: { ...input, submissionDate: now, userEmail, userName },
+        };
       } catch (error) {
         console.error("[sheets] Submit error:", error);
         return { success: false, message: "Failed to submit data. Please try again later." };
