@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -363,6 +363,8 @@ export default function Result() {
                     </DialogTrigger>
                     {!imgError && (
                       <DialogContent className="max-w-5xl p-0 bg-slate-900/95 border-slate-700 backdrop-blur-sm">
+                        <DialogTitle className="sr-only">Bill Top Sheet Viewer</DialogTitle>
+                        <DialogDescription className="sr-only">Zoom and view the bill top sheet image</DialogDescription>
                         <div className="flex flex-col h-[90vh]">
                           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
                             <p className="text-sm text-slate-300 font-medium">Bill Top Sheet</p>
